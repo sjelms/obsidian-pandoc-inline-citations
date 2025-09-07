@@ -1,7 +1,7 @@
 {
   "name": "obsidian-pandoc-inline-citations",
   "version": "2.1.0",
-  "description": "This is a sample plugin for Obsidian ([https://obsidian.md](https://obsidian.md))",
+"description": "An Obsidian plugin for formatted Pandoc inline citations, with support for aliased wikilinks.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
