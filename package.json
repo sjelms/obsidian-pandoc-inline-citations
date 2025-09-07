@@ -1,6 +1,6 @@
 {
   "name": "obsidian-pandoc-inline-citations",
-  "version": "2.1.0", // <-- Increment this to match the manifest
+  "version": "2.1.0",
   "description": "This is a sample plugin for Obsidian ([https://obsidian.md](https://obsidian.md))",
   "main": "main.js",
   "scripts": {
