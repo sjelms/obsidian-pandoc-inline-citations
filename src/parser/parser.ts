@@ -29,6 +29,10 @@ interface State {
   inExplicitLocator: boolean;
   inKey: boolean;
   inLink: boolean;
+  // True if we are inside a wikilink ([[...]]) that contains an alias pipe
+  // e.g. [[@key|Alias]]. When this is true, we should ignore this bracketed
+  // segment entirely so Obsidian can render the alias natively.
+  inLinkHasAlias: boolean;
   inSuffix: boolean;
   seekingSuffix: boolean;
   seekingLocator: boolean;
@@ -48,6 +52,7 @@ function newState(): State {
     inExplicitLocator: false,
     inSuffix: false,
     inLink: false,
+    inLinkHasAlias: false,
     seekingSuffix: false,
     seekingLocator: false,
     encounteredKey: false,
@@ -593,10 +598,20 @@ export function getCitationSegments(str: string, ignoreLinks: boolean = false) {
         continue;
       }
 
+      // Detect alias pipe inside a wikilink. If we see a '|' while inside
+      // a double-bracket link, mark this link as aliased so we can skip it
+      // when the link closes. This preserves Obsidian's native alias display
+      // in Live Preview and Reading view.
+      if (c === '|' && state.inLink) {
+        state.inLinkHasAlias = true;
+      }
+
       if (c === ']') {
         state.bracketDepth--;
         if (state.bracketDepth === 0) {
-          if (ignoreLinks) {
+          // Skip citation parsing for links when ignoreLinks is enabled,
+          // OR when we are in a wikilink that contains an alias pipe.
+          if (ignoreLinks || (state.inLink && state.inLinkHasAlias)) {
             if (state.inLink || next === '(') {
               state = null;
               seekState = null;
