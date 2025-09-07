@@ -23,3 +23,8 @@ dist
 .hotreload
 coverage
 yarn-error.log
+
+# parked
+/_helper
+obsidian-pandoc-inline-citations.code-workspace
+/plugin-dist
