@@ -1,10 +1,10 @@
 {
-	"id": "obsidian-pandoc-reference-list",
-	"name": "Pandoc Reference List",
-	"version": "2.0.25",
-	"minAppVersion": "0.15.0",
-	"description": "Displays a formatted reference in the sidebar for each pandoc citekey present in the current document.",
-	"author": "mgmeyers",
-	"authorUrl": "https://github.com/mgmeyers/obsidian-pandoc-reference-list",
+	"id": "obsidian-pandoc-inline-citations",
+	"name": "Pandoc Inline Citations",
+	"version": "2.1.0",
+	"minAppVersion": "0.1.0",
+	"description": "Revised display formatted inline pandoc citations, allowing alias links, in Live Preview and Reading view and provides a references sidebar. Based on the original Pandoc Inline Citations plugin by @mgmeyers.",
+	"author": "sjelms",
+	"authorUrl": "https://github.com/sjelms/obsidian-pandoc-inline-citations",
 	"isDesktopOnly": true
 }

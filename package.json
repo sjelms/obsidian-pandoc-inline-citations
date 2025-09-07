@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-sample-plugin",
-  "version": "2.0.25",
-  "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+  "name": "obsidian-pandoc-inline-citations",
+  "version": "2.1.0", // <-- Increment this to match the manifest
+  "description": "This is a sample plugin for Obsidian ([https://obsidian.md](https://obsidian.md))",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
