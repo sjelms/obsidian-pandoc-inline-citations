@@ -1,8 +1,8 @@
 # Feature Specification: Aliased Citation Handling
 
-**Feature Branch**: [implementation-aliased-citations](https://github.com/sjelms/obsidian-pandoc-inline-citations/tree/implementation-aliased-citations)  
+**Feature Branch**: merged (implemented on main)  
 **Created**: 2025-09-07  
-**Status**: Draft  
+**Status**: Implemented  
 **Input**: User description: "Ensure the plugin renders standard citations with Pandoc-style output but skips aliased citations so Obsidian handles them natively."
 
 ---
@@ -17,8 +17,8 @@
    → Data: citation keys, alias text
    → Constraints: alias always indicated by `|`
 3. Clarify unclear aspects
-   → Citation keys are always formatted in the specified way and generated from BibTeX.
-   → Aliased citations should always bypass Pandoc, even if alias is short (e.g., "ibid.").
+   → Citation keys follow the vault convention and are generated from BibTeX.
+   → Aliased citations always bypass Pandoc/CSL rendering, even if the alias is short (e.g., "ibid.").
 4. User Scenarios & Testing section: defined below
 5. Functional Requirements: testable items listed
 6. Entities: citation key, alias, reference cache
@@ -45,11 +45,11 @@ so that my notes remain clean, legible, and consistent.
 ### Acceptance Scenarios
 1. **Given** a note with `[[@Klein2022-xj]]`,  
    **When** the plugin renders it,  
-   **Then** it should appear as `(Klein 2022)` in reading/preview mode.  
+   **Then** it appears as `(Klein 2022)` in both Live Preview and Reading View.  
 
 2. **Given** a note with `[[@Klein2022-xj|Why Housing Is So Expensive]]`,  
    **When** the plugin encounters it,  
-   **Then** it should **not process the link** and allow Obsidian’s native renderer to display the alias as `Why Housing Is So Expensive`.  
+   **Then** it does not process the link and Obsidian’s native renderer displays the alias text `Why Housing Is So Expensive` (unchanged), in both Live Preview and Reading View.  
 
 ### Edge Cases
 - Citation keys are always formatted in the specified way and generated from BibTeX.  
@@ -66,6 +66,7 @@ so that my notes remain clean, legible, and consistent.
 - **FR-003**: System MUST NOT corrupt or alter the alias text provided by the user.  
 - **FR-004**: System MUST handle malformed citation links gracefully (e.g., log or ignore, without breaking rendering).  
 - **FR-005**: System SHOULD support citekeys containing hyphens; citekeys never contain underscores or colons.  
+- **FR-006**: Behavior MUST apply consistently in both Live Preview and Reading View.  
 
 ### Key Entities
 - **Citation Key**: Identifier beginning with `@`, used to match against bibliography cache.  
@@ -83,9 +84,9 @@ so that my notes remain clean, legible, and consistent.
 - [x] All mandatory sections completed  
 
 ### Requirement Completeness
-- [ ] No [NEEDS CLARIFICATION] markers remain  
-- [x] Requirements are testable and unambiguous (where possible)  
-- [ ] Success criteria are measurable (clarify edge cases)  
+- [x] No [NEEDS CLARIFICATION] markers remain  
+- [x] Requirements are testable and unambiguous  
+- [x] Success criteria are measurable  
 - [x] Scope is clearly bounded  
 - [x] Dependencies and assumptions identified  
 
@@ -94,10 +95,20 @@ so that my notes remain clean, legible, and consistent.
 ## Execution Status
 - [x] User description parsed  
 - [x] Key concepts extracted  
-- [ ] Ambiguities marked (remain unresolved)  
+- [x] Ambiguities resolved  
 - [x] User scenarios defined  
 - [x] Requirements generated  
 - [x] Entities identified  
-- [ ] Review checklist passed (pending clarifications)  
+- [x] Review checklist passed  
+
+---
+
+## Decision Record
+
+- Decision: Skip aliased wikilinks during citation parsing so Obsidian renders the alias text natively; continue rendering non-aliased citations with CSL/Pandoc output.
+- Rationale: Ensures Live Preview matches Reading View and native Obsidian behavior for `[[...|alias]]` while preserving rich citation features for non-aliased citations.
+- Implementation Notes: See TECHNICAL.md for parser changes and details.
+
+For technical details, see: [TECHNICAL.md](TECHNICAL.md)
 
 ---
