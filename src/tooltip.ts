@@ -27,8 +27,9 @@ export class TooltipManager {
       return;
     }
 
-    el.win.clearTimeout(this.previewDBTimer);
-    el.win.clearTimeout(this.previewDBTimerClose);
+    const view = (el as any).win || el.ownerDocument?.defaultView || window;
+    view.clearTimeout(this.previewDBTimer);
+    view.clearTimeout(this.previewDBTimerClose);
 
     const keys = el.dataset.citekey.split('|');
 
@@ -64,7 +65,8 @@ export class TooltipManager {
     }
 
     const modClasses = this.plugin.settings.hideLinks ? ' collapsed-links' : '';
-    const tooltip = (this.tooltip = el.doc.body.createDiv({
+    const doc = ((el as any).doc || el.ownerDocument || document) as Document;
+    const tooltip = (this.tooltip = doc.body.createDiv({
       cls: `pwc-tooltip${modClasses}`,
     }));
     const rect = el.getBoundingClientRect();
@@ -103,8 +105,8 @@ export class TooltipManager {
       }
     });
 
-    el.win.setTimeout(() => {
-      const viewport = el.win.visualViewport;
+    view.setTimeout(() => {
+      const viewport = view.visualViewport;
       const divRect = tooltip.getBoundingClientRect();
 
       tooltip.style.left =
@@ -123,7 +125,7 @@ export class TooltipManager {
         this.hideTooltip();
       }
     };
-    el.win.addEventListener('scroll', this.boundScroll, { capture: true });
+    view.addEventListener('scroll', this.boundScroll, { capture: true });
   }
 
   boundScroll: () => void;
@@ -131,7 +133,11 @@ export class TooltipManager {
   hideTooltip() {
     this.isHoveringTooltip = false;
     this.isScrollBound = false;
-    this.tooltip?.win.removeEventListener('scroll', this.boundScroll);
+    const tView =
+      (this.tooltip as any)?.win ||
+      this.tooltip?.ownerDocument?.defaultView ||
+      window;
+    tView.removeEventListener('scroll', this.boundScroll);
     this.tooltip?.remove();
     this.tooltip = null;
     this.boundScroll = null;

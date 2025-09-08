@@ -72,3 +72,44 @@ Views
 - Telemetry/logging toggle for unmatched keys to aid debugging.
 
 ---
+
+## 7. Compatibility Fix: DOM access changes (2025‑09‑08)
+
+Background
+- Obsidian appears to have changed or removed non‑standard element properties `el.doc` and `el.win` used by this plugin. This caused failures in Reading mode postprocessing and tooltip handling.
+
+Changes
+- `src/markdownPostprocessor.ts`
+  - Replaced `el.doc.createNodeIterator(...)` with a safe fallback:
+    - `const doc = (el as any).doc || el.ownerDocument || document;`
+    - Use `doc.createNodeIterator(el, NodeFilter.SHOW_TEXT)`.
+- `src/tooltip.ts`
+  - Replaced references to `el.doc` and `el.win` with fallbacks:
+    - Document: `(el as any).doc || el.ownerDocument || document`
+    - Window: `(el as any).win || el.ownerDocument?.defaultView || window`
+  - Updated timers and event listeners (timeouts, scroll) to use the resolved window.
+
+Impact
+- Restores citation rendering and tooltips in Reading mode and Live Preview.
+- Improves resilience in pop‑out windows where `ownerDocument/defaultView` are distinct.
+
+Notes
+- The original upstream plugin did not rely on these non‑standard properties, which is why it continued working.
+
+---
+
+## 8. Build and Distribution
+
+Build
+- `node esbuild.config.mjs production` generates `main.js` at repo root.
+
+Dist Layout
+- Copy bundle and metadata to the distribution folder:
+  - `plugin-dist/obsidian-pandoc-inline-citations/main.js`
+  - `plugin-dist/obsidian-pandoc-inline-citations/manifest.json`
+  - `plugin-dist/obsidian-pandoc-inline-citations/styles.css`
+
+Install into Vault
+- Copy the `plugin-dist/obsidian-pandoc-inline-citations` folder into your vault at:
+  - `<vault>/.obsidian/plugins/obsidian-pandoc-inline-citations`
+- Reload Obsidian or toggle the plugin off/on.

@@ -20,7 +20,8 @@ function onlyValType(segs: Segment[]) {
 export function processCiteKeys(plugin: ReferenceList) {
   return (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
     const toRemove: Node[] = [];
-    const walker = el.doc.createNodeIterator(el, NodeFilter.SHOW_TEXT);
+    const doc = (el as any).doc || el.ownerDocument || document;
+    const walker = doc.createNodeIterator(el, NodeFilter.SHOW_TEXT);
     const sectionInfo = ctx.getSectionInfo(el);
 
     if (!sectionInfo && !el.hasClass('markdown-preview-view')) return;
