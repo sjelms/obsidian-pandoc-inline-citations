@@ -918,6 +918,7 @@ export class BibManager {
         }
       }
     });
+    this.plugin.emitter.trigger('citation-cache-updated', file.path);
   }
 
   getCacheForPath(filePath: string) {
