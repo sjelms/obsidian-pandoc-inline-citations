@@ -196,6 +196,14 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
 
         for (const match of segments) {
           if (!tree) tree = syntaxTree(view.state);
+          // Exclude literal syntax before either replacement widgets or marks.
+          // Previously this check ran only in the source-marking branch.
+          if (match.some((part) => {
+            const props = tree.resolveInner(from + part.from, 1)
+              .type.prop(tokenClassNodeProp);
+            return props && ignoreListRegEx.test(props);
+          })) continue;
+
           const rendered = citekeyCache?.citations.find(
             (c) =>
               !matched.has(c) &&
