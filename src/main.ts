@@ -1,3 +1,4 @@
+import { Prec } from '@codemirror/state';
 import {
   Events,
   MarkdownView,
@@ -75,7 +76,7 @@ export default class ReferenceList extends Plugin {
     this.registerEditorExtension([
       bibManagerField.init(() => this.bibManager),
       citeKeyCacheField,
-      citeKeyPlugin,
+      Prec.highest(citeKeyPlugin),
       editorTooltipHandler(this.tooltipManager),
     ]);
 

@@ -26,6 +26,7 @@ import {
 import { BibManager, FileCache } from './bib/bibManager';
 import equal from 'fast-deep-equal';
 import { TooltipManager } from './tooltip';
+import { citationDisplayRange } from './editor/citationRanges';
 
 const ignoreListRegEx = /code|math|templater|hashtag/;
 
@@ -207,8 +208,11 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
 
           if (isLivePreview) {
             if (rendered) {
-              const start = from + match[0].from;
-              const end = from + match[match.length - 1].to;
+              const { from: start, to: end } = citationDisplayRange(
+                view.state.doc,
+                from + match[0].from,
+                from + match[match.length - 1].to
+              );
               const center = Math.round((start + end) / 2);
 
               let linkText: string;
