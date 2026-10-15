@@ -29,7 +29,8 @@ import { setCiteKeyCache } from 'src/editorExtension';
 import equal from 'fast-deep-equal';
 import { t } from 'src/lang/helpers';
 import path from 'path';
-import { FSWatcher, watch, existsSync } from 'fs';
+import { existsSync } from 'fs';
+import { BibliographyWatcher, watchBibliography } from './bibliographyWatcher';
 
 const fuseSettings = {
   includeMatches: true,
@@ -147,7 +148,7 @@ export class BibManager {
   zCitekeyToLinks: Map<string, string> = new Map();
   zCitekeyToPDFLinks: Map<string, string[]> = new Map();
 
-  watcherCache: Map<string, FSWatcher> = new Map();
+  watcherCache: Map<string, BibliographyWatcher> = new Map();
 
   constructor(plugin: ReferenceList) {
     this.plugin = plugin;
@@ -314,21 +315,13 @@ export class BibManager {
       const bibPath = getBibPath(settings.pathToBibliography, getVaultRoot);
 
       if (bibPath && !this.watcherCache.has(bibPath)) {
-        let dbTimer = 0;
         this.watcherCache.set(
           bibPath,
-          watch(bibPath, (evt) => {
-            if (evt === 'change') {
-              clearTimeout(dbTimer);
-              dbTimer = activeWindow.setTimeout(() => {
-                this.loadGlobalBibFile().then(() => {
-                  this.fileCache.clear();
-                  this.plugin.processReferences();
-                });
-              }, 100);
-            } else {
-              this.clearWatcher(bibPath);
-            }
+          watchBibliography(bibPath, async () => {
+            await this.loadGlobalBibFile();
+            if (!this.plugin) return;
+            this.fileCache.clear();
+            await this.plugin.processReferences();
           })
         );
       }
@@ -642,19 +635,11 @@ export class BibManager {
     if (settings?.bibliography) {
       const bibPath = getBibPath(settings.bibliography, getVaultRoot);
       if (!this.watcherCache.has(bibPath)) {
-        let dbTimer = 0;
         this.watcherCache.set(
           bibPath,
-          watch(bibPath, (evt) => {
-            if (evt === 'change') {
-              clearTimeout(dbTimer);
-              dbTimer = activeWindow.setTimeout(() => {
-                this.fileCache.delete(file);
-                this.plugin.processReferences();
-              }, 100);
-            } else {
-              this.clearWatcher(bibPath);
-            }
+          watchBibliography(bibPath, async () => {
+            this.fileCache.delete(file);
+            if (this.plugin) await this.plugin.processReferences();
           })
         );
       }
@@ -918,6 +903,7 @@ export class BibManager {
         }
       }
     });
+    this.plugin.emitter.trigger('citation-cache-updated', file.path);
   }
 
   getCacheForPath(filePath: string) {

@@ -26,6 +26,8 @@ import {
 import { BibManager, FileCache } from './bib/bibManager';
 import equal from 'fast-deep-equal';
 import { TooltipManager } from './tooltip';
+import { citationDisplayRange } from './editor/citationRanges';
+import { citationNoteTarget } from './editor/citationLinks';
 
 const ignoreListRegEx = /code|math|templater|hashtag/;
 
@@ -83,7 +85,16 @@ class CiteWidget extends WidgetType {
   }
 
   eq(widget: this): boolean {
-    return this.cite === widget.cite;
+    // Typing shifts source offsets and creates fresh cache objects. Reuse the
+    // measured DOM when its output, tooltip metadata and destination are equal.
+    return (
+      this.sourcePath === widget.sourcePath &&
+      this.linkText === widget.linkText &&
+      this.cite.val === widget.cite.val &&
+      this.cite.note === widget.cite.note &&
+      this.cite.noteIndex === widget.cite.noteIndex &&
+      equal(this.cite.citations, widget.cite.citations)
+    );
   }
 
   toDOM() {
@@ -94,6 +105,9 @@ class CiteWidget extends WidgetType {
 
     if (this.cite.note) {
       attr['data-note-index'] = this.cite.noteIndex.toString();
+    }
+    if (this.linkText) {
+      attr['data-note-link'] = this.linkText;
     }
 
     return createSpan(
@@ -195,6 +209,14 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
 
         for (const match of segments) {
           if (!tree) tree = syntaxTree(view.state);
+          // Exclude literal syntax before either replacement widgets or marks.
+          // Previously this check ran only in the source-marking branch.
+          if (match.some((part) => {
+            const props = tree.resolveInner(from + part.from, 1)
+              .type.prop(tokenClassNodeProp);
+            return props && ignoreListRegEx.test(props);
+          })) continue;
+
           const rendered = citekeyCache?.citations.find(
             (c) =>
               !matched.has(c) &&
@@ -207,8 +229,11 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
 
           if (isLivePreview) {
             if (rendered) {
-              const start = from + match[0].from;
-              const end = from + match[match.length - 1].to;
+              const { from: start, to: end } = citationDisplayRange(
+                view.state.doc,
+                from + match[0].from,
+                from + match[match.length - 1].to
+              );
               const center = Math.round((start + end) / 2);
 
               let linkText: string;
@@ -220,7 +245,8 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                   .prop(tokenClassNodeProp)
                   ?.includes('hmd-internal-link')
               ) {
-                linkText = view.state.sliceDoc(centerNode.from, centerNode.to);
+                const nativeTarget = view.state.sliceDoc(centerNode.from, centerNode.to);
+                linkText = citationNoteTarget(nativeTarget) || nativeTarget;
               }
 
               if (

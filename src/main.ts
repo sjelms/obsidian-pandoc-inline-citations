@@ -1,3 +1,4 @@
+import { Prec } from '@codemirror/state';
 import {
   Events,
   MarkdownView,
@@ -17,6 +18,7 @@ import {
 } from './editorExtension';
 import { t } from './lang/helpers';
 import { processCiteKeys } from './markdownPostprocessor';
+import { citationLocatorLinkPlugin } from './editor/citationLinkEvents';
 import {
   DEFAULT_SETTINGS,
   ReferenceListSettings,
@@ -75,7 +77,8 @@ export default class ReferenceList extends Plugin {
     this.registerEditorExtension([
       bibManagerField.init(() => this.bibManager),
       citeKeyCacheField,
-      citeKeyPlugin,
+      Prec.highest(citeKeyPlugin),
+      citationLocatorLinkPlugin,
       editorTooltipHandler(this.tooltipManager),
     ]);
 

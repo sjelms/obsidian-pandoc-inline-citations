@@ -2,7 +2,7 @@ import { execa } from 'execa';
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
-import download from 'download';
+import { getLocalZoteroText } from './zoteroRequest';
 import { request } from 'http';
 import { CSLList, PartialCSLEntry } from './types';
 
@@ -326,8 +326,9 @@ export async function getZBib(
     }
   }
 
-  const bib = await download(
-    `http://127.0.0.1:${port}/better-bibtex/export/library?/${groupId}/library.json`
+  const bib = await getLocalZoteroText(
+    port,
+    `/better-bibtex/export/library?/${groupId}/library.json`
   );
 
   const str = bib.toString();
@@ -392,18 +393,16 @@ export async function refreshZBib(
 }
 
 export async function isZoteroRunning(port: string = DEFAULT_ZOTERO_PORT) {
-  const p = download(`http://127.0.0.1:${port}/better-bibtex/cayw?probe=true`);
-  const res = await Promise.race([
-    p,
-    new Promise((res) => {
-      getGlobal().setTimeout(() => {
-        res(null);
-        p.destroy();
-      }, 150);
-    }),
-  ]);
-
-  return res?.toString() === 'ready';
+  try {
+    const result = await getLocalZoteroText(
+      port,
+      '/better-bibtex/cayw?probe=true',
+      150
+    );
+    return result === 'ready';
+  } catch {
+    return false;
+  }
 }
 
 export async function getItemJSONFromCiteKeys(
