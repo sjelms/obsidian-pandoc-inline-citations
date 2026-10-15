@@ -16,12 +16,22 @@ export const citationLocatorLinkPlugin = ViewPlugin.fromClass(class {
     this.eventRoot.addEventListener('mouseover', this.onMouseOver, true);
   }
 
-  private getLink(event: MouseEvent) {
+  private getLink(event: MouseEvent, includeWidgets = false) {
     const element = event.target as HTMLElement;
     if (!element?.closest || !this.view.contentDOM.contains(element)) return null;
     if (!this.view.state.field(bibManagerField)?.plugin.settings.renderLinkCitations) return null;
     const info = this.view.state.field(editorInfoField);
     if (!info?.file) return null;
+    // Rendered wikilink citations are spans, so Obsidian cannot discover their
+    // destination as it does for Reading-view anchors. Expose it for hover only;
+    // leave the widget's existing click handler in charge of navigation.
+    const widget = element.closest('.pandoc-citation.is-link[data-note-link]') as HTMLElement;
+    if (widget) {
+      if (!includeWidgets || widget.closest('code, pre')) return null;
+      const raw = widget.getAttribute('data-note-link');
+      if (!raw) return null;
+      return { target: citationNoteTarget(raw) || raw, targetEl: widget, info };
+    }
     // Existing callout DOM can survive a plugin reload. Route those links safely
     // too, without requiring a note or application restart to rebuild the block.
     const anchor = element.closest('a.internal-link') as HTMLAnchorElement;
@@ -33,7 +43,7 @@ export const citationLocatorLinkPlugin = ViewPlugin.fromClass(class {
       }
     }
     const targetEl = element.closest('.cm-hmd-internal-link, .cm-link') as HTMLElement;
-    if (!targetEl || !this.view.contentDOM.contains(targetEl) || element.closest('.pandoc-citation')) return null;
+    if (!targetEl || !this.view.contentDOM.contains(targetEl)) return null;
     const position = this.view.posAtDOM(element);
     const link = citationLocatorLinkAt(this.view.state.doc, position);
     if (!link) return null;
@@ -56,7 +66,7 @@ export const citationLocatorLinkPlugin = ViewPlugin.fromClass(class {
   private onClick = (event: MouseEvent) => { if (event.button === 0) this.open(event); };
   private onMouseDown = (event: MouseEvent) => { if (event.button === 1) this.open(event); };
   private onMouseOver = (event: MouseEvent) => {
-    const link = this.getLink(event);
+    const link = this.getLink(event, true);
     if (!link) return;
     event.stopImmediatePropagation();
     app.workspace.trigger('hover-link', {

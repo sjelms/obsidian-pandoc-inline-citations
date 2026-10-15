@@ -142,3 +142,74 @@ describe('native editor locator links', () => {
     expect(test.workspace.trigger).not.toHaveBeenCalled();
   });
 });
+
+
+describe('source-note previews on editor citation text', () => {
+  function renderedWidget(test: ReturnType<typeof editor>) {
+    (global as any).createSpan = ({ cls, attr }, callback) => {
+      const span = document.createElement('span') as any;
+      span.className = cls;
+      for (const [key, value] of Object.entries(attr)) span.setAttribute(key, value as string);
+      span.addClass = value => span.classList.add(value);
+      span.setText = value => { span.textContent = value; };
+      callback(span);
+      return span;
+    };
+    const widget = citeKeyPlugin.create(test.view).decorations.iter().value.spec.widget;
+    const span = widget.toDOM();
+    test.target.replaceWith(span);
+    return span;
+  }
+
+  it.each([
+    ['[[@Stoller2015-ne]]', false],
+    ['[[@Stoller2015-ne]]', true],
+    ['[[@Stoller2015-ne, p. 318]]', false],
+    ['[[@Stoller2015-ne, p. 318]]', true],
+  ])('requests the source-note preview for a rendered citation: %s, Command held: %s', (source, metaKey) => {
+    const test = editor(source);
+    const span = renderedWidget(test);
+    const event = new MouseEvent('mouseover', { bubbles: true, metaKey });
+    span.dispatchEvent(event);
+    expect(test.workspace.trigger).toHaveBeenCalledWith('hover-link', expect.objectContaining({
+      event, source: 'editor', targetEl: span,
+      hoverParent: test.view.state.field(editorInfoField),
+      linktext: '@Stoller2015-ne', sourcePath: 'test.md',
+    }));
+    expect(test.workspace.openLinkText).not.toHaveBeenCalled();
+    expect(span.textContent).toBe('(Stoller, 2015, p. 318)');
+  });
+
+  it('retains the widget click path after hover, without duplicate navigation', () => {
+    jest.useFakeTimers();
+    (global as any).activeWindow = window;
+    try {
+      const test = editor();
+      const span = renderedWidget(test);
+      span.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, metaKey: true }));
+      span.dispatchEvent(new MouseEvent('click', { bubbles: true, metaKey: true }));
+      expect(test.workspace.openLinkText).not.toHaveBeenCalled();
+      jest.runOnlyPendingTimers();
+      expect(test.workspace.openLinkText).toHaveBeenCalledTimes(1);
+      expect(test.workspace.openLinkText).toHaveBeenCalledWith('@Stoller2015-ne', 'test.md', 'tab');
+    } finally {
+      delete (global as any).activeWindow;
+      jest.useRealTimers();
+    }
+  });
+
+  it('normalizes hovering over a marked citekey in Source mode, not just its page suffix', () => {
+    const test = editor(undefined, false);
+    const mark = test.target.appendChild(document.createElement('span'));
+    mark.className = 'cm-pandoc-citation pandoc-citation is-resolved';
+    mark.textContent = 'Stoller2015-ne';
+    const nativeHover = jest.fn();
+    test.view.contentDOM.addEventListener('mouseover', nativeHover);
+    mark.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, metaKey: true }));
+    expect(test.workspace.trigger).toHaveBeenCalledWith('hover-link', expect.objectContaining({
+      targetEl: test.target, linktext: '@Stoller2015-ne', sourcePath: 'test.md',
+    }));
+    expect(nativeHover).not.toHaveBeenCalled();
+    expect(test.workspace.openLinkText).not.toHaveBeenCalled();
+  });
+});

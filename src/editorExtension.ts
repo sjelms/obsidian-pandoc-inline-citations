@@ -97,6 +97,9 @@ class CiteWidget extends WidgetType {
     if (this.cite.note) {
       attr['data-note-index'] = this.cite.noteIndex.toString();
     }
+    if (this.linkText) {
+      attr['data-note-link'] = this.linkText;
+    }
 
     return createSpan(
       {

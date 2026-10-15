@@ -16,10 +16,27 @@ Reading view and rendered callouts, including callout DOM retained on reload.
 Preserve ordinary links, aliases, code and modifier-key navigation. Ambiguous
 multi-source wikilinks and aliased locator destinations are not reinterpreted.
 
-Local gates: 96 targeted tests pass; production build and JavaScript syntax
+Local gates: 102 targeted tests pass; production build and JavaScript syntax
 check pass. The native event-order regression test reproduced and then passed
 for Obsidian's outer capture listener. These are not a substitute for live tests.
 The inherited TypeScript declaration/compiler incompatibility remains separate.
+
+User runtime feedback: Reading-view note previews work for normal and locator
+wikilinks without a modifier. Editor locator clicks now open the correct note,
+but editor hover still reports a page-suffixed filename and rendered citations
+have no note preview. These results replace the earlier blanket failure report:
+Reading view and click routing are working; editor hover is still pending.
+
+Follow-up source evidence: Reading view retains native anchors; editor widgets
+are spans with a click handler but no note-preview destination. The locator
+handler also excluded `.pandoc-citation`, which includes marked Source-mode
+keys, not only rendered widgets. New regression tests reproduced both gaps.
+The hover candidate exposes the widget destination to the public `hover-link`
+event and includes raw citekey marks. It preserves the existing widget click
+handler and Reading-view implementation. Emitting with source `editor` retains
+Obsidian's editor preview modifier preference; Reading view uses `preview` and
+can have a different modifier preference. Native popup behaviour remains an
+interactive acceptance check, not something established by these unit tests.
 
 Live acceptance (pending):
 - [ ] Reload only the citation plugin, without Force Reload of Obsidian.
