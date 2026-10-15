@@ -70,14 +70,29 @@ workflow, and confirm resolution updates after a short delay without Force
 Reload or losing note positions. Also verify a source in a rendered callout.
 This native runtime check remains pending.
 
-## 3. Scrollbar flicker while typing in long Live Preview notes — diagnosis pending
+## 3. Scrollbar flicker while typing — native runtime verification pending
 
-Observed: reported in long notes with many citations/callouts, absent in Source.
-Source leads: citation widgets compare object identity; refreshed citation
-objects can cause replacements even when visible output is unchanged. The
-bibliography dispatcher also clears Reading-view renderer sections. Neither
-lead is a verified root cause. Measure replacement counts and scroll metrics
-in the dedicated test note before changing either behaviour.
+Observed: reported in long Live Preview notes with many citations/callouts,
+absent in Source mode. A real CodeMirror editor regression fixture containing
+60 citation paragraphs reproduced 136 new citation elements across eight
+ordinary typing/cache-refresh cycles, despite identical rendered citations.
+`CiteWidget.eq` compared cache-object identity rather than output.
+
+Candidate: reuse the widget DOM when rendered text, citation metadata, note
+information, source path and link destination are unchanged. Ignore source
+offset changes for DOM equality. The same regression now produces zero new
+citation elements and retains the original DOM nodes. Changed citation text,
+metadata and navigation still invalidate the widget. All 112 targeted tests
+pass. The Reading-view renderer and native callout code were not changed.
+
+This demonstrates removal of unnecessary DOM churn; it does not prove the
+native scrollbar symptom is fully resolved. Other causes remain possible.
+
+A second build is saved under ignored `plugin-dist/widget-stability-20261015`.
+It includes the preceding bibliography refresh commit but is not installed
+until the refresh-only build passes its live gate. Then test typing at the
+same position in a long test note with citations/callouts and compare scrollbar
+and caret stability, retaining correct citation updates and hover/navigation.
 
 ## 4. Locator citation colour differs inside rendered callouts — cosmetic
 

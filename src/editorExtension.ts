@@ -85,7 +85,16 @@ class CiteWidget extends WidgetType {
   }
 
   eq(widget: this): boolean {
-    return this.cite === widget.cite;
+    // Typing shifts source offsets and creates fresh cache objects. Reuse the
+    // measured DOM when its output, tooltip metadata and destination are equal.
+    return (
+      this.sourcePath === widget.sourcePath &&
+      this.linkText === widget.linkText &&
+      this.cite.val === widget.cite.val &&
+      this.cite.note === widget.cite.note &&
+      this.cite.noteIndex === widget.cite.noteIndex &&
+      equal(this.cite.citations, widget.cite.citations)
+    );
   }
 
   toDOM() {
