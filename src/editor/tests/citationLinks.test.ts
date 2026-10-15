@@ -45,6 +45,8 @@ function editor(source = '[[@Stoller2015-ne, p. 318]]', live = true, classes = '
 
 describe('citation note destinations', () => {
   it.each([
+    ['-@Felstead2011-az', '@Felstead2011-az'],
+    ['-@Felstead2011-az, p. 12', '@Felstead2011-az'],
     ['@Sawchuk2013-eu, p. 336', '@Sawchuk2013-eu'],
     ['@Stoller2015-ne, p. 318', '@Stoller2015-ne'],
     ['@Kalantzis2012-wb, pp. 199–200', '@Kalantzis2012-wb'],
@@ -72,6 +74,13 @@ describe('citation note destinations', () => {
 });
 
 describe('native editor locator links', () => {
+  it('routes suppressed-author source clicks and hover to the existing note', () => {
+    const test = editor('[[-@Felstead2011-az]]', false);
+    test.target.dispatchEvent(new MouseEvent('click', { bubbles: true, metaKey: true }));
+    expect(test.workspace.openLinkText).toHaveBeenCalledWith('@Felstead2011-az', 'test.md', 'tab');
+    test.target.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(test.workspace.trigger).toHaveBeenCalledWith('hover-link', expect.objectContaining({ linktext: '@Felstead2011-az' }));
+  });
   it('captures a Live Preview click before native filename creation', () => {
     const test = editor();
     test.target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));

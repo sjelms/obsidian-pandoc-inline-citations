@@ -1,8 +1,8 @@
 import { getCitationSegments, getCitations } from '../parser/parser';
 
-/** Normalize a single citation locator, never an alias or an ordinary link. */
+/** Normalize a single citation locator or suppressed-author citation, never an alias or an ordinary link. */
 export function citationNoteTarget(link: string): string | null {
-  if (!link.startsWith('@') || link.includes('|')) return null;
+  if (!/^-?@/.test(link) || link.includes('|')) return null;
   const source = `[${link}]`;
   const groups = getCitationSegments(source);
   if (groups.length !== 1) return null;
@@ -12,7 +12,7 @@ export function citationNoteTarget(link: string): string | null {
   // The inherited parser represents comma-prefixed page numbers as a suffix.
   // Keep that display behaviour; recognize it here only to choose the note.
   const hasLocator = citation.locator || /^,\s*(?:pp?\.|pages?)\s*\S/i.test(citation.suffix || '');
-  return citation.id && hasLocator ? `@${citation.id}` : null;
+  return citation.id && (hasLocator || citation['suppress-author']) ? `@${citation.id}` : null;
 }
 
 interface CitationLineDocument {
