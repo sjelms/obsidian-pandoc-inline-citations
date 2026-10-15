@@ -3,6 +3,7 @@ import { MarkdownPostProcessorContext, MarkdownRenderChild } from 'obsidian';
 import ReferenceList from './main';
 import { Segment, SegmentType, getCitationSegments } from './parser/parser';
 import equal from 'fast-deep-equal';
+import { citationNoteTarget } from './editor/citationLinks';
 
 function getCiteClass(isResolved: boolean, isUnresolved: boolean) {
   const cls = ['pandoc-citation'];
@@ -40,6 +41,22 @@ export function processCiteKeys(plugin: ReferenceList) {
 
     if (!sectionInfo && !el.hasClass('markdown-preview-view') &&
       !el.querySelector('.callout')) return;
+
+    // Keep the locator in the displayed citation, but out of the note destination.
+    // Do this before cache lookup, so navigation does not depend on bibliography timing.
+    if (plugin.settings.renderLinkCitations) {
+      el.querySelectorAll('a.internal-link').forEach((anchor) => {
+        if (anchor.closest('code, pre')) return;
+        const nativeTarget = anchor.getAttribute('data-href') || anchor.getAttribute('href') || '';
+        if (anchor.textContent !== nativeTarget && !anchor.querySelector('.pandoc-citation')) return;
+        const target = citationNoteTarget(nativeTarget);
+        if (!target) return;
+        anchor.setAttribute('data-href', target);
+        anchor.setAttribute('href', target);
+        if (anchor.getAttribute('aria-label') === nativeTarget) anchor.setAttribute('aria-label', target);
+        anchor.classList.toggle('is-unresolved', !plugin.app.metadataCache.getFirstLinkpathDest(target, ctx.sourcePath));
+      });
+    }
 
     // We wont get a sectionInfo in print mode
     const cache = plugin.bibManager.getCacheForPath(ctx.sourcePath);

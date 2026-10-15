@@ -18,6 +18,7 @@ import {
 } from './editorExtension';
 import { t } from './lang/helpers';
 import { processCiteKeys } from './markdownPostprocessor';
+import { citationLocatorLinkPlugin } from './editor/citationLinkEvents';
 import {
   DEFAULT_SETTINGS,
   ReferenceListSettings,
@@ -77,6 +78,7 @@ export default class ReferenceList extends Plugin {
       bibManagerField.init(() => this.bibManager),
       citeKeyCacheField,
       Prec.highest(citeKeyPlugin),
+      citationLocatorLinkPlugin,
       editorTooltipHandler(this.tooltipManager),
     ]);
 

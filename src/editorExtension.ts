@@ -27,6 +27,7 @@ import { BibManager, FileCache } from './bib/bibManager';
 import equal from 'fast-deep-equal';
 import { TooltipManager } from './tooltip';
 import { citationDisplayRange } from './editor/citationRanges';
+import { citationNoteTarget } from './editor/citationLinks';
 
 const ignoreListRegEx = /code|math|templater|hashtag/;
 
@@ -232,7 +233,8 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                   .prop(tokenClassNodeProp)
                   ?.includes('hmd-internal-link')
               ) {
-                linkText = view.state.sliceDoc(centerNode.from, centerNode.to);
+                const nativeTarget = view.state.sliceDoc(centerNode.from, centerNode.to);
+                linkText = citationNoteTarget(nativeTarget) || nativeTarget;
               }
 
               if (
