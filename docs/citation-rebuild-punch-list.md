@@ -46,18 +46,29 @@ Live acceptance (pending):
 - [ ] Check Source mode, Live Preview and Reading view, including a callout.
 - [ ] Recheck aliases, code, ordinary links and mode/scroll stability.
 
-## 2. New bibliography sources after Git pull — diagnosis pending
+## 2. New bibliography sources after Git pull — live verification pending
 
-Observed: Obsidian previews the linked note, but the citation plugin reports
-no citation until Force Reload.
+Observed: Obsidian previews the linked note, but citation resolution requires
+Force Reload. A real temporary-file replacement reproduced `rename`, watcher
+closure, no refresh, and loss of subsequent updates with the old handler.
 
-Source evidence: both bibliography watchers reload on `change`, but close the
-watcher on another event without rearming it. Atomic file replacement is a
-candidate explanation; actual Git-pull events have not been captured. An
-isolated sandbox file-watch probe delivered no events and was inconclusive.
-Next gate: observe the configured bibliography file's events during replacement
-in a controlled test, then test refresh without restarting or losing position.
-Prefer bibliography-file detection over a dependency on the Git plugin.
+Candidate: poll metadata for the bibliography path (default 1 second, plus
+150 ms settling), serialize conversion/refresh work, and retain monitoring
+across atomic replacement or deletion/recreation. Only the bibliography paths
+are monitored; there is no vault scan or Git-plugin dependency. Existing data
+is retained if conversion fails; a subsequent valid update refreshes normally.
+
+Seven new tests use real temporary files. The manager integration runs actual
+BibTeX conversion with the installed Pandoc and citeproc, verifies previously
+unresolved sources become formatted citations, and confirms editor updates
+contain effects rather than document edits. All 109 targeted tests pass.
+A separate refresh-only build is saved under ignored `plugin-dist` so it can
+be tested without combining a scrollbar change.
+
+Live gate: reload only the plugin, add/sync a source through the normal
+workflow, and confirm resolution updates after a short delay without Force
+Reload or losing note positions. Also verify a source in a rendered callout.
+This native runtime check remains pending.
 
 ## 3. Scrollbar flicker while typing in long Live Preview notes — diagnosis pending
 
